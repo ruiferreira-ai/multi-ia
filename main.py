@@ -1,16 +1,29 @@
 print(">>> ESTA É A VERSÃO NOVA <<<")
+
 from fastapi import FastAPI
 from pydantic import BaseModel
-from transformers import pipeline
-import uvicorn
+from groq import Groq
+import os
 
 app = FastAPI()
 
-# Modelo base (podes trocar depois se quiseres)
-llm = pipeline("text-generation", model="mistralai/Mistral-7B-Instruct-v0.2")
+# Cliente Groq (usa a variável de ambiente GROQ_API_KEY no Railway)
+client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
 class Request(BaseModel):
     input: str
+
+def call_llm(system_prompt: str, user_input: str, max_tokens: int = 700):
+    completion = client.chat.completions.create(
+        model="mixtral-8x7b-32768",
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_input},
+        ],
+        temperature=0.7,
+        max_tokens=max_tokens,
+    )
+    return completion.choices[0].message.content
 
 # ---------- PROMPTS MESTRES ----------
 
@@ -96,37 +109,29 @@ Pedido:
 
 @app.post("/mastermind")
 def mastermind(req: Request):
-    prompt = MASTERMINDAI_PROMPT + "\n" + req.input
-    out = llm(prompt, max_length=600, do_sample=True, temperature=0.7)[0]["generated_text"]
+    out = call_llm(MASTERMINDAI_PROMPT, req.input, max_tokens=600)
     return {"role": "MasterMindAI", "response": out}
 
 @app.post("/productbuilder")
 def productbuilder(req: Request):
-    prompt = PRODUCTBUILDER_PROMPT + "\n" + req.input
-    out = llm(prompt, max_length=700, do_sample=True, temperature=0.7)[0]["generated_text"]
+    out = call_llm(PRODUCTBUILDER_PROMPT, req.input, max_tokens=700)
     return {"role": "ProductBuilderAI", "response": out}
 
 @app.post("/imageforge")
 def imageforge(req: Request):
-    prompt = IMAGEFORGE_PROMPT + "\n" + req.input
-    out = llm(prompt, max_length=500, do_sample=True, temperature=0.7)[0]["generated_text"]
+    out = call_llm(IMAGEFORGE_PROMPT, req.input, max_tokens=500)
     return {"role": "ImageForgeAI", "response": out}
 
 @app.post("/promomaster")
 def promomaster(req: Request):
-    prompt = PROMOMASTER_PROMPT + "\n" + req.input
-    out = llm(prompt, max_length=700, do_sample=True, temperature=0.7)[0]["generated_text"]
+    out = call_llm(PROMOMASTER_PROMPT, req.input, max_tokens=700)
     return {"role": "PromoMasterAI", "response": out}
 
 @app.post("/insightai")
 def insightai(req: Request):
-    prompt = INSIGHTAI_PROMPT + "\n" + req.input
-    out = llm(prompt, max_length=800, do_sample=True, temperature=0.7)[0]["generated_text"]
+    out = call_llm(INSIGHTAI_PROMPT, req.input, max_tokens=800)
     return {"role": "InsightAI", "response": out}
 
 @app.get("/")
 def root():
     return {"status": "online", "message": "Multi-IA (MasterMind + 4 IAs) ativa."}
-
-if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000)
