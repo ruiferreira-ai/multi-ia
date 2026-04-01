@@ -1,3 +1,4 @@
+print(">>> ESTA É A VERSÃO NOVA <<<")
 from fastapi import FastAPI
 from pydantic import BaseModel
 from transformers import pipeline
