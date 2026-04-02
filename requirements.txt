@@ -1,4 +1,4 @@
 fastapi
 uvicorn
 pydantic
-groq==0.3.0
+requests
