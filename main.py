@@ -1,4 +1,4 @@
-print(">>> ESTA É A VERSÃO NOVA <<<")
+print(">>> VERSÃO ATUALIZADA DO SERVIDOR MULTI-IA <<<")
 
 from fastapi import FastAPI
 from pydantic import BaseModel
@@ -7,15 +7,24 @@ import os
 
 app = FastAPI()
 
+# -----------------------------
+# MODELO DE REQUEST
+# -----------------------------
 class Request(BaseModel):
     input: str
 
+# -----------------------------
+# CLIENTE GROQ
+# -----------------------------
 def get_client():
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
         raise RuntimeError("GROQ_API_KEY não encontrada no ambiente.")
     return Groq(api_key=api_key)
 
+# -----------------------------
+# FUNÇÃO CENTRAL DE LLM
+# -----------------------------
 def call_llm(system_prompt: str, user_input: str, max_tokens: int = 700):
     client = get_client()
     completion = client.chat.completions.create(
@@ -25,20 +34,23 @@ def call_llm(system_prompt: str, user_input: str, max_tokens: int = 700):
             {"role": "user", "content": user_input},
         ],
         temperature=0.7,
-        max_tokens=max_tokens,
+        max_completion_tokens=max_tokens,
+        stream=False
     )
-    return completion.choices[0].message.content
+    return completion.choices[0].message["content"]
 
-# ---------- PROMPTS MESTRES ----------
-
+# -----------------------------
+# PROMPTS DAS IAs
+# -----------------------------
 MASTERMINDAI_PROMPT = """..."""
 PRODUCTBUILDER_PROMPT = """..."""
 IMAGEFORGE_PROMPT = """..."""
 PROMOMASTER_PROMPT = """..."""
 INSIGHTAI_PROMPT = """..."""
 
-# ---------- ENDPOINTS ----------
-
+# -----------------------------
+# ENDPOINTS DAS IAs
+# -----------------------------
 @app.post("/mastermind")
 def mastermind(req: Request):
     out = call_llm(MASTERMINDAI_PROMPT, req.input, max_tokens=600)
@@ -64,15 +76,18 @@ def insightai(req: Request):
     out = call_llm(INSIGHTAI_PROMPT, req.input, max_tokens=800)
     return {"role": "InsightAI", "response": out}
 
+# -----------------------------
+# ROTA PRINCIPAL
+# -----------------------------
 @app.get("/")
 def root():
     return {"status": "online", "message": "Multi-IA (MasterMind + 4 IAs) ativa."}
 
+# -----------------------------
+# DEBUG DE VARIÁVEIS
+# -----------------------------
 @app.get("/debug-env")
 def debug_env():
-    import os
     return {
         "GROQ_API_KEY": os.getenv("GROQ_API_KEY")
     }
-
-
