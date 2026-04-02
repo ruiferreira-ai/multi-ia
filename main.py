@@ -1,129 +1,51 @@
-print(">>> VERSÃO ATUALIZADA DO SERVIDOR MULTI-IA <<<")
-
+import os
+import requests
 from fastapi import FastAPI
 from pydantic import BaseModel
-from groq import Groq
-import os
 
 app = FastAPI()
 
-# -----------------------------
-# MODELO DE REQUEST
-# -----------------------------
 class Request(BaseModel):
     input: str
 
-# -----------------------------
-# CLIENTE GROQ
-# -----------------------------
-def get_client():
+def call_llm(system_prompt: str, user_input: str, max_tokens: int = 700):
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
-        raise RuntimeError("GROQ_API_KEY não encontrada no ambiente.")
-    return Groq(api_key=api_key)
+        raise RuntimeError("GROQ_API_KEY não encontrada.")
 
-# -----------------------------
-# FUNÇÃO CENTRAL DE LLM
-# -----------------------------
-def call_llm(system_prompt: str, user_input: str, max_tokens: int = 700):
-    client = get_client()
-    completion = client.chat.completions.create(
-        model="mixtral-8x7b-32768",
-        messages=[
+    url = "https://api.groq.com/openai/v1/chat/completions"
+
+    payload = {
+        "model": "mixtral-8x7b-32768",
+        "messages": [
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_input},
+            {"role": "user", "content": user_input}
         ],
-        temperature=0.7,
-        max_completion_tokens=max_tokens,
-        stream=False
-    )
-    return completion.choices[0].message["content"]
+        "max_tokens": max_tokens,
+        "temperature": 0.7
+    }
 
-# -----------------------------
-# PROMPTS DAS IAs
-# -----------------------------
-MASTERMINDAI_PROMPT = """..."""
-PRODUCTBUILDER_PROMPT = """..."""
-IMAGEFORGE_PROMPT = """..."""
-PROMOMASTER_PROMPT = """..."""
-INSIGHTAI_PROMPT = """..."""
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json"
+    }
 
-# -----------------------------
-# ENDPOINTS DAS IAs
-# -----------------------------
-@app.post("/mastermind")
-def mastermind(req: Request):
-    out = call_llm(MASTERMINDAI_PROMPT, req.input, max_tokens=600)
-    return {"role": "MasterMindAI", "response": out}
+    response = requests.post(url, json=payload, headers=headers)
+    data = response.json()
+
+    return data["choices"][0]["message"]["content"]
+
+PRODUCTBUILDER_PROMPT = "És um criador de produtos."
 
 @app.post("/productbuilder")
 def productbuilder(req: Request):
     out = call_llm(PRODUCTBUILDER_PROMPT, req.input, max_tokens=700)
     return {"role": "ProductBuilderAI", "response": out}
 
-@app.post("/imageforge")
-def imageforge(req: Request):
-    out = call_llm(IMAGEFORGE_PROMPT, req.input, max_tokens=500)
-    return {"role": "ImageForgeAI", "response": out}
-
-@app.post("/promomaster")
-def promomaster(req: Request):
-    out = call_llm(PROMOMASTER_PROMPT, req.input, max_tokens=700)
-    return {"role": "PromoMasterAI", "response": out}
-
-@app.post("/insightai")
-def insightai(req: Request):
-    out = call_llm(INSIGHTAI_PROMPT, req.input, max_tokens=800)
-    return {"role": "InsightAI", "response": out}
-
-# -----------------------------
-# ROTA PRINCIPAL
-# -----------------------------
 @app.get("/")
 def root():
-    return {"status": "online", "message": "Multi-IA (MasterMind + 4 IAs) ativa."}
+    return {"status": "online"}
 
-# -----------------------------
-# DEBUG DE VARIÁVEIS
-# -----------------------------
 @app.get("/debug-env")
 def debug_env():
-    return {
-        "GROQ_API_KEY": os.getenv("GROQ_API_KEY")
-    }
-    # ================================
-# GROQ CLIENT – VERSÃO ATUALIZADA
-# ================================
-
-import os
-from groq import Groq
-
-# --------------------------------
-# Função para obter o cliente Groq
-# --------------------------------
-def get_client():
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
-        raise RuntimeError("GROQ_API_KEY não encontrada no ambiente.")
-    return Groq(api_key=api_key)
-
-# --------------------------------
-# Função central para chamadas LLM
-# --------------------------------
-def call_llm(system_prompt: str, user_input: str, max_tokens: int = 700):
-    client = get_client()
-
-    completion = client.chat.completions.create(
-        model="mixtral-8x7b-32768",   # modelo recomendado
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_input},
-        ],
-        temperature=0.7,
-        max_completion_tokens=max_tokens,
-        stream=False  # desativado porque queremos resposta completa
-    )
-
-    # O novo SDK devolve message como dicionário
-    return completion.choices[0].message["content"]
-
+    return {"GROQ_API_KEY": os.getenv("GROQ_API_KEY")}
