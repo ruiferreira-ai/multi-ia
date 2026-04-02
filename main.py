@@ -67,3 +67,10 @@ def insightai(req: Request):
 @app.get("/")
 def root():
     return {"status": "online", "message": "Multi-IA (MasterMind + 4 IAs) ativa."}
+    @app.get("/debug-env")
+def debug_env():
+    import os
+    return {
+        "GROQ_API_KEY": os.getenv("GROQ_API_KEY")
+    }
+
