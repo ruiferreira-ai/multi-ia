@@ -9,24 +9,24 @@ class Request(BaseModel):
     input: str
 
 # -----------------------------
-# Função LLM via API HTTP Groq
+# Função LLM via API HTTP OpenAI (GRÁTIS)
 # -----------------------------
 def call_llm(system_prompt: str, user_input: str, max_tokens: int = 700):
-    api_key = os.getenv("GROQ_API_KEY")
+    api_key = os.getenv("OPENAI_API_KEY")
     if not api_key:
-        return "Erro: GROQ_API_KEY não encontrada no ambiente."
+        return "Erro: OPENAI_API_KEY não encontrada no ambiente."
 
-    url = "https://api.groq.com/openai/v1/chat/completions"
+    url = "https://api.openai.com/v1/chat/completions"
 
     payload = {
-    "model": "llama-3.1-70b-versatile",
-    "messages": [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_input}
-    ],
-    "max_tokens": max_tokens,
-    "temperature": 0.7
-}
+        "model": "gpt-4o-mini",
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_input}
+        ],
+        "max_tokens": max_tokens,
+        "temperature": 0.7
+    }
 
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -35,21 +35,17 @@ def call_llm(system_prompt: str, user_input: str, max_tokens: int = 700):
 
     response = requests.post(url, json=payload, headers=headers)
 
-    # Tenta converter para JSON
     try:
         data = response.json()
     except Exception:
-        return f"Erro: resposta inválida da API Groq. Status: {response.status_code}"
+        return f"Erro: resposta inválida da API OpenAI. Status: {response.status_code}"
 
-    # Se a API devolveu erro
     if "error" in data:
-        return f"Erro da API Groq: {data['error']}"
+        return f"Erro da API OpenAI: {data['error']}"
 
-    # Se não há choices
     if "choices" not in data:
-        return f"Erro: resposta inesperada da API Groq: {data}"
+        return f"Erro: resposta inesperada da API OpenAI: {data}"
 
-    # Tudo OK → devolve o texto
     return data["choices"][0]["message"]["content"]
 
 # -----------------------------
@@ -74,4 +70,4 @@ def root():
 
 @app.get("/debug-env")
 def debug_env():
-    return {"GROQ_API_KEY": os.getenv("GROQ_API_KEY")}
+    return {"OPENAI_API_KEY": os.getenv("OPENAI_API_KEY")}
