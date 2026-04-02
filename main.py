@@ -19,14 +19,14 @@ def call_llm(system_prompt: str, user_input: str, max_tokens: int = 700):
     url = "https://api.groq.com/openai/v1/chat/completions"
 
     payload = {
-        "model": "mixtral-8x7b-32768",
-        "messages": [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_input}
-        ],
-        "max_tokens": max_tokens,
-        "temperature": 0.7
-    }
+    "model": "llama-3.1-70b-versatile",
+    "messages": [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_input}
+    ],
+    "max_tokens": max_tokens,
+    "temperature": 0.7
+}
 
     headers = {
         "Authorization": f"Bearer {api_key}",
