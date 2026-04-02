@@ -91,3 +91,40 @@ def debug_env():
     return {
         "GROQ_API_KEY": os.getenv("GROQ_API_KEY")
     }
+    # ================================
+# GROQ CLIENT – VERSÃO ATUALIZADA
+# ================================
+
+import os
+from groq import Groq
+
+# --------------------------------
+# Função para obter o cliente Groq
+# --------------------------------
+def get_client():
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        raise RuntimeError("GROQ_API_KEY não encontrada no ambiente.")
+    return Groq(api_key=api_key)
+
+# --------------------------------
+# Função central para chamadas LLM
+# --------------------------------
+def call_llm(system_prompt: str, user_input: str, max_tokens: int = 700):
+    client = get_client()
+
+    completion = client.chat.completions.create(
+        model="mixtral-8x7b-32768",   # modelo recomendado
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_input},
+        ],
+        temperature=0.7,
+        max_completion_tokens=max_tokens,
+        stream=False  # desativado porque queremos resposta completa
+    )
+
+    # O novo SDK devolve message como dicionário
+    return completion.choices[0].message["content"]
+    )
+
