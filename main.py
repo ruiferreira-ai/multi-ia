@@ -126,5 +126,4 @@ def call_llm(system_prompt: str, user_input: str, max_tokens: int = 700):
 
     # O novo SDK devolve message como dicionário
     return completion.choices[0].message["content"]
-    )
 
